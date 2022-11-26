@@ -18,4 +18,8 @@ export class CreateNewsDto {
   @IsOptional()
   @IsNumber()
   countView?: number;
+
+  @ApiProperty()
+  @IsString()
+  cover?: string;
 }

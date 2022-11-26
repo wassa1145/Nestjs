@@ -1,13 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { CreateNewsDto } from './create.news.dto';
+// import { CreateNewsDto } from './create.news.dto';
 import { News, NewsCreate, NewsDto } from './news.interface';
+import { getRandomInt } from './utils';
 
-function getRandomInt(min: number, max: number): number {
-  min = Math.ceil(min);
-  max = Math.floor(max);
-
-  return Math.floor(Math.random() * (max - min)) + min;
-}
 @Injectable()
 export class NewsService {
   private readonly news: News = {
@@ -17,10 +12,12 @@ export class NewsService {
       description: 'Описание новости',
       author: 'Иван Петрович',
       countView: 12,
+      cover:
+        'https://avatars.mds.yandex.net/get-altay/6065996/2a00000180b2f36b6705c67959f64a53bd32/XXL',
     },
   };
 
-  getAllNews(): CreateNewsDto[] {
+  getAllNews(): NewsDto[] {
     return Object.values(this.news);
   }
 

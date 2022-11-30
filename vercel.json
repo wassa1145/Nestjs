@@ -1,9 +1,9 @@
 { 
-	"version" 2,
+	"version": 2,
 	"builds": [
 		{
 			"src": "src/main.ts",
-			"use": "@versel/node"
+			"use": "@vercel/node"
 		}
 	],
 	"routes": [
@@ -12,6 +12,7 @@
 			"dest": "src/main.ts",
 			"methods": [
 				"GET",
+				"PATCH",
 				"POST",
 				"PUT",
 				"DELETE"

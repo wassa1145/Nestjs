@@ -9,21 +9,59 @@ import {
   Param,
   Post,
 } from '@nestjs/common';
+import { renderNewsAll } from 'src/view/news/news-all';
+import { renderNews } from 'src/view/news/news-detail';
+import { renderTemplate } from 'src/view/template';
+import { CommentsService } from './comments/comments.service';
 import { CreateNewsDto } from './create.news.dto';
 import { NewsService } from './news.service';
 
 @Controller('news')
 export class NewsController {
-  constructor(private readonly newsService: NewsService) {}
-
+  constructor(
+    private readonly newsService: NewsService,
+    private readonly commentsService: CommentsService,
+  ) {}
   @Get()
   getNews() {
     return this.newsService.getAllNews();
   }
 
+  @Get('/all')
+  getAllView() {
+    const news = this.newsService.getAllNews();
+    const content = renderNewsAll(news);
+    return renderTemplate(content, {
+      title: 'Список новостей',
+      description: 'Наши новости',
+    });
+  }
+
+  @Get('/:id/detail')
+  getDetail(@Param('id') id: number | string) {
+    const news = this.newsService.find(id);
+    const comments = this.commentsService.find(id);
+
+    const item = {
+      ...news,
+      comments,
+    };
+    const content = renderNews(item);
+    return renderTemplate(content, {
+      title: news.title,
+      description: 'Детальная страница новости',
+    });
+  }
+
   @Get('/:id')
   get(@Param('id') id: number) {
-    return this.newsService.find(id);
+    const news = this.newsService.find(id);
+    const comments = this.commentsService.find(id);
+
+    return {
+      ...news,
+      comments,
+    };
   }
 
   @Post()

@@ -6,9 +6,18 @@ import {
   Param,
   Patch,
   Post,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { CommentsService } from './comments.service';
-import { Comment } from './comments.interface';
+import { CommentsCreateDto } from './comments-create.dto';
+import { CommentsEditDto } from './comments-edit.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { HelperFileLoad } from 'src/utils/HelperFileLoad';
+
+const PATH_NEWS = '/static/';
+HelperFileLoad.path = PATH_NEWS;
 
 @Controller('comments')
 export class CommentsController {
@@ -20,7 +29,23 @@ export class CommentsController {
   }
 
   @Post('/:newsId')
-  create(@Param('newsId') newsId: string | number, @Body() comment: Comment) {
+  @UseInterceptors(
+    FileInterceptor('avatar', {
+      storage: diskStorage({
+        destination: HelperFileLoad.destinationPath,
+        filename: HelperFileLoad.customFileName,
+      }),
+      fileFilter: HelperFileLoad.typeFileFilter,
+    }),
+  )
+  create(
+    @Param('newsId') newsId: string | number,
+    @Body() comment: CommentsCreateDto,
+    @UploadedFile() avatar: Express.Multer.File,
+  ) {
+    if (avatar?.filename) {
+      comment.avatar = PATH_NEWS + avatar.filename;
+    }
     return this.commentsService.create(newsId, comment);
   }
 
@@ -32,11 +57,24 @@ export class CommentsController {
     return this.commentsService.remove(newsId, commentId);
   }
   @Patch('/:newsId/:commentId')
+  @UseInterceptors(
+    FileInterceptor('avatar', {
+      storage: diskStorage({
+        destination: HelperFileLoad.destinationPath,
+        filename: HelperFileLoad.customFileName,
+      }),
+      fileFilter: HelperFileLoad.typeFileFilter,
+    }),
+  )
   edit(
     @Param('newsId') newsId: string | number,
     @Param('commentId') commentId: string | number,
-    @Body() message: string,
+    @Body() commentsEditDto: CommentsEditDto,
+    @UploadedFile() avatar: Express.Multer.File,
   ) {
-    return this.commentsService.edit(newsId, commentId, message);
+    if (avatar?.filename) {
+      commentsEditDto.avatar = PATH_NEWS + avatar.filename;
+    }
+    return this.commentsService.edit(newsId, commentId, commentsEditDto);
   }
 }

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 // import { CreateNewsDto } from './create.news.dto';
 import { News, NewsCreate, NewsDto } from './news.interface';
-import { getRandomInt } from './utils';
+import { getRandomInt } from '../utils/utils';
 
 @Injectable()
 export class NewsService {

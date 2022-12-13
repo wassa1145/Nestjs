@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { getRandomInt } from '../utils';
+import { getRandomInt } from '../../utils/utils';
+import { CommentsCreateDto } from './comments-create.dto';
+import { CommentsEditDto } from './comments-edit.dto';
 import { Comments, Comment } from './comments.interface';
 
 @Injectable()
@@ -21,7 +23,7 @@ export class CommentsService {
     return null;
   }
 
-  create(newsId: string | number, comment: Comment): string {
+  create(newsId: string | number, comment: CommentsCreateDto): string {
     const id = getRandomInt(0, 10000);
     if (!this.comments[newsId]) {
       this.comments[newsId] = [];
@@ -47,7 +49,7 @@ export class CommentsService {
   edit(
     newsId: string | number,
     commentId: string | number,
-    message: string,
+    commentsEditDto: CommentsEditDto,
   ): string {
     if (!this.comments[newsId]) return 'Новость не найдена';
     const indexComment = this.comments[newsId].findIndex(
@@ -55,7 +57,12 @@ export class CommentsService {
     );
 
     if (indexComment === -1) return 'Комментарий не найден';
-    this.comments[newsId][indexComment].message = message;
+    this.comments[newsId][indexComment] = {
+      ...this.comments[newsId][indexComment],
+      ...commentsEditDto,
+    };
+    // this.comments[newsId][indexComment] = { }
+    // this.comments[newsId][indexComment].message = message;
     return 'Комментраий отредактирован';
   }
 }

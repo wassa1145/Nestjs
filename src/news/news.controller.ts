@@ -8,18 +8,17 @@ import {
   HttpStatus,
   Param,
   Post,
+  Render,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { HelperFileLoad } from 'src/utils/HelperFileLoad';
-import { renderNewsAll } from 'src/view/news/news-all';
-import { renderNews } from 'src/view/news/news-detail';
-import { renderTemplate } from 'src/view/template';
 import { CommentsService } from './comments/comments.service';
 import { CreateNewsDto } from './create.news.dto';
 import { NewsService } from './news.service';
 import { diskStorage } from 'multer';
+import { MailService } from 'src/mail/mail.service';
 
 const PATH_NEWS = '/static/';
 HelperFileLoad.path = PATH_NEWS;
@@ -29,6 +28,7 @@ export class NewsController {
   constructor(
     private readonly newsService: NewsService,
     private readonly commentsService: CommentsService,
+    private readonly mailService: MailService,
   ) {}
   @Get()
   getNews() {
@@ -36,16 +36,27 @@ export class NewsController {
   }
 
   @Get('/all')
+  @Render('news-list')
   getAllView() {
     const news = this.newsService.getAllNews();
-    const content = renderNewsAll(news);
-    return renderTemplate(content, {
-      title: 'Список новостей',
-      description: 'Наши новости',
-    });
+    return { news, title: 'Список новостей' };
+  }
+
+  @Get('create/new')
+  @Render('create-news')
+  async createView() {
+    return {};
+  }
+
+  @Get('edit/:id')
+  @Render('edit-news')
+  async editNews(@Param('id') id: number | string) {
+    const news = this.newsService.find(id);
+    return news;
   }
 
   @Get('/:id/detail')
+  @Render('news-detail')
   getDetail(@Param('id') id: number | string) {
     const news = this.newsService.find(id);
     const comments = this.commentsService.find(id);
@@ -54,11 +65,7 @@ export class NewsController {
       ...news,
       comments,
     };
-    const content = renderNews(item);
-    return renderTemplate(content, {
-      title: news.title,
-      description: 'Детальная страница новости',
-    });
+    return item;
   }
 
   @Get('/:id')
@@ -82,14 +89,16 @@ export class NewsController {
       fileFilter: HelperFileLoad.typeFileFilter,
     }),
   )
-  create(
+  async create(
     @Body() createNewsDto: CreateNewsDto,
     @UploadedFile() cover: Express.Multer.File,
   ) {
     if (cover?.filename) {
       createNewsDto.cover = PATH_NEWS + cover.filename;
     }
-    return this.newsService.create(createNewsDto);
+    const news = await this.newsService.create(createNewsDto);
+    this.mailService.sendNewNewsForAdmins(['wassa@li.ru'], news);
+    return news;
   }
 
   @Delete('/:id')
@@ -100,7 +109,23 @@ export class NewsController {
 
   @HttpCode(200)
   @Post('/:id')
-  edit(@Param('id') id: number, @Body() news: CreateNewsDto) {
+  @UseInterceptors(
+    FileInterceptor('cover', {
+      storage: diskStorage({
+        destination: HelperFileLoad.destinationPath,
+        filename: HelperFileLoad.customFileName,
+      }),
+      fileFilter: HelperFileLoad.typeFileFilter,
+    }),
+  )
+  edit(
+    @Param('id') id: number,
+    @Body() news: CreateNewsDto,
+    @UploadedFile() cover: Express.Multer.File,
+  ) {
+    if (cover?.filename) {
+      news.cover = PATH_NEWS + cover.filename;
+    }
     const isChangeNews = this.newsService.edit(id, news);
     if (isChangeNews) return 'Новость изменена';
     throw new HttpException(

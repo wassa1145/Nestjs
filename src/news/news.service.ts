@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
-// import { CreateNewsDto } from './create.news.dto';
 import { News, NewsCreate, NewsDto } from './news.interface';
 import { getRandomInt } from '../utils/utils';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class NewsService {
+  constructor(private readonly mailService: MailService) {}
   private readonly news: News = {
     1: {
       id: 1,
@@ -12,8 +13,7 @@ export class NewsService {
       description: 'Описание новости',
       author: 'Иван Петрович',
       countView: 12,
-      cover:
-        'https://avatars.mds.yandex.net/get-altay/6065996/2a00000180b2f36b6705c67959f64a53bd32/XXL',
+      cover: '/static/bfdcebbc-ae5a-4636-a540-1c5a6e9a55f1.jpg',
     },
   };
 
@@ -44,8 +44,26 @@ export class NewsService {
   }
 
   edit(id: number | string, news: NewsCreate) {
+    const updateNews: Partial<NewsCreate> = Object.keys(news).reduce(
+      (acc, key) => {
+        if (news[key] !== this.news[id][key]) acc[key] = news[key];
+        return acc;
+      },
+      {},
+    );
+    if (Object.keys(updateNews).length) {
+      this.mailService.sendEditNewsForAdmins(
+        ['wassa@li.ru'],
+        this.news[id],
+        updateNews,
+      );
+    }
     if (this.news[id]) {
-      this.news[id] = { ...news, id };
+      this.news[id] = {
+        ...news,
+        id,
+        cover: news.cover || this.news[id].cover,
+      };
       return true;
     }
     return false;

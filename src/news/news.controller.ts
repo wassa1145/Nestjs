@@ -13,12 +13,14 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { HelperFileLoad } from 'src/utils/HelperFileLoad';
+import { HelperFileLoad } from '../utils/HelperFileLoad';
 import { CommentsService } from './comments/comments.service';
 import { CreateNewsDto } from './create.news.dto';
 import { NewsService } from './news.service';
 import { diskStorage } from 'multer';
-import { MailService } from 'src/mail/mail.service';
+import { MailService } from '../mail/mail.service';
+import { NewsDto } from './news.interface';
+import { NewsEntity } from './news.entity';
 
 const PATH_NEWS = '/static/';
 HelperFileLoad.path = PATH_NEWS;
@@ -30,15 +32,16 @@ export class NewsController {
     private readonly commentsService: CommentsService,
     private readonly mailService: MailService,
   ) {}
+
   @Get()
-  getNews() {
-    return this.newsService.getAllNews();
+  async getNews(): Promise<NewsEntity[]> {
+    return await this.newsService.getAllNews();
   }
 
   @Get('/all')
   @Render('news-list')
-  getAllView() {
-    const news = this.newsService.getAllNews();
+  async getAllView() {
+    const news = await this.newsService.getAllNews();
     return { news, title: 'Список новостей' };
   }
 
@@ -50,33 +53,30 @@ export class NewsController {
 
   @Get('edit/:id')
   @Render('edit-news')
-  async editNews(@Param('id') id: number | string) {
-    const news = this.newsService.find(id);
-    return news;
+  async editNews(@Param('id') id: number) {
+    const news = await this.newsService.find(id);
+    return { ...news };
   }
 
   @Get('/:id/detail')
   @Render('news-detail')
-  getDetail(@Param('id') id: number | string) {
-    const news = this.newsService.find(id);
-    const comments = this.commentsService.find(id);
-
-    const item = {
-      ...news,
-      comments,
-    };
-    return item;
+  async getDetail(@Param('id') id: number) {
+    const news = await this.newsService.find(id);
+    if (news) return news;
+    else {
+      throw new HttpException(
+        {
+          status: HttpStatus.NOT_FOUND,
+          error: 'Новость не найдена',
+        },
+        HttpStatus.NOT_FOUND,
+      );
+    }
   }
 
   @Get('/:id')
-  get(@Param('id') id: number) {
-    const news = this.newsService.find(id);
-    const comments = this.commentsService.find(id);
-
-    return {
-      ...news,
-      comments,
-    };
+  async get(@Param('id') id: number) {
+    return await this.newsService.find(id);
   }
 
   @Post()
@@ -92,7 +92,7 @@ export class NewsController {
   async create(
     @Body() createNewsDto: CreateNewsDto,
     @UploadedFile() cover: Express.Multer.File,
-  ) {
+  ): Promise<NewsEntity> {
     if (cover?.filename) {
       createNewsDto.cover = PATH_NEWS + cover.filename;
     }
@@ -102,8 +102,8 @@ export class NewsController {
   }
 
   @Delete('/:id')
-  remove(@Param('id') id: number) {
-    const isRemoved = this.newsService.remove(id);
+  async remove(@Param('id') id: number) {
+    const isRemoved = await this.newsService.remove(id);
     return isRemoved ? 'Новость удалена' : 'Передан неверный id';
   }
 
@@ -118,7 +118,7 @@ export class NewsController {
       fileFilter: HelperFileLoad.typeFileFilter,
     }),
   )
-  edit(
+  async edit(
     @Param('id') id: number,
     @Body() news: CreateNewsDto,
     @UploadedFile() cover: Express.Multer.File,
@@ -126,7 +126,7 @@ export class NewsController {
     if (cover?.filename) {
       news.cover = PATH_NEWS + cover.filename;
     }
-    const isChangeNews = this.newsService.edit(id, news);
+    const isChangeNews = await this.newsService.edit(id, news);
     if (isChangeNews) return 'Новость изменена';
     throw new HttpException(
       'Новость не найдена',

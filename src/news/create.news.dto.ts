@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNumber, IsOptional, IsString, IsNotEmpty } from 'class-validator';
 
 export class CreateNewsDto {
   @ApiProperty()
@@ -10,10 +10,6 @@ export class CreateNewsDto {
   @IsString({ message: 'Поле description должно быть строкой' })
   description: string;
 
-  @ApiProperty()
-  @IsString()
-  author: string;
-
   @ApiPropertyOptional()
   @IsOptional()
   @IsNumber()
@@ -21,4 +17,7 @@ export class CreateNewsDto {
 
   @ApiProperty()
   cover?: string;
+
+  @IsNotEmpty()
+  userId: string;
 }

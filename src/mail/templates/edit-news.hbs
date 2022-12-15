@@ -1,0 +1,34 @@
+<table>
+	{{#if updateNews.title}}
+		<tr>
+			<td>Заголовок было:</td>
+			<td style="text-decoration:line-through;">{{news.title}}</td>
+			<td>Стало:</td>
+			<td>{{updateNews.title}}</td>
+		</tr>
+	{{/if}}
+	{{#if updateNews.description}}
+		<tr>
+			<td>Описание было:</td>
+			<td>{{news.description}}</td>
+			<td>Стало:</td>
+			<td>{{updateNews.description}}</td>
+		</tr>
+	{{/if}}
+	{{#if updateNews.author}}
+		<tr>
+			<td>Автор было:</td>
+			<td>{{news.author}}</td>
+			<td>Стало:</td>
+			<td>{{updateNews.author}}</td>
+		</tr>
+	{{/if}}
+	<tr>
+		<td>Ссылка на новость</td>
+		<td>
+			<a href='http://localhost:3000/news/{{news.id}}/detail'>
+			http://localhost:3000/news/{{news.id}}/detail
+			</a>
+		</td>
+	</tr>
+</table>

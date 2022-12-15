@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { NewsModule } from './news/news.module';
 import { CalculatorModule } from './calculator/calculator.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { CalculatorModule } from './calculator/calculator.module';
     }),
     NewsModule,
     CalculatorModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService],

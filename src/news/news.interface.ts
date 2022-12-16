@@ -1,10 +1,9 @@
 import { Comment } from './comments/comments.interface';
 
 export interface NewsDto {
-  id: string | number;
+  id: number;
   title: string;
   description: string;
-  author: string;
   countView?: number;
   cover?: string;
   comments?: Comment[];
@@ -12,4 +11,4 @@ export interface NewsDto {
 
 export type NewsCreate = Omit<NewsDto, 'id'>;
 
-export type News = Record<string | number, NewsDto>;
+export type News = Record<number, NewsDto>;

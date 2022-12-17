@@ -1,71 +1,77 @@
 import { Injectable } from '@nestjs/common';
-import { News, NewsCreate, NewsDto } from './news.interface';
-import { getRandomInt } from '../utils/utils';
-import { MailService } from 'src/mail/mail.service';
+import { NewsCreate, NewsDto } from './news.interface';
+import { MailService } from '../mail/mail.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { NewsEntity } from './news.entity';
+import { UsersService } from '../user/users.service';
+import { CreateNewsDto } from './create.news.dto';
 
 @Injectable()
 export class NewsService {
-  constructor(private readonly mailService: MailService) {}
-  private readonly news: News = {
-    1: {
-      id: 1,
-      title: 'Название новости',
-      description: 'Описание новости',
-      author: 'Иван Петрович',
-      countView: 12,
-      cover: '/static/bfdcebbc-ae5a-4636-a540-1c5a6e9a55f1.jpg',
-    },
-  };
+  constructor(
+    private readonly mailService: MailService,
+    @InjectRepository(NewsEntity)
+    private readonly newsRepository: Repository<NewsEntity>,
+    private readonly usersService: UsersService,
+  ) {}
 
-  getAllNews(): NewsDto[] {
-    return Object.values(this.news);
+  getAllNews(): Promise<NewsEntity[]> {
+    return this.newsRepository.find({});
   }
 
-  find(id: number | string): NewsDto | undefined {
-    return this.news[id];
+  find(id: number): Promise<NewsEntity> {
+    return this.newsRepository.findOne({
+      where: { id },
+      relations: ['user', 'comments', 'comments.user'],
+    });
+    // return this.newsRepository.findOne(
+    //   { id },
+    //   { relations: ['user', 'comments', 'comments.user'] },
+    // );
   }
 
-  create(news: NewsCreate): NewsDto {
-    const newId = getRandomInt(0, 10000);
-    const newNews = {
-      ...news,
-      id: newId,
-    };
-    this.news[newId] = newNews;
-    return newNews;
+  async create(news: CreateNewsDto): Promise<NewsEntity> {
+    const newsEntity = new NewsEntity();
+    newsEntity.title = news.title;
+    newsEntity.description = news.description;
+    newsEntity.cover = news.cover;
+    const _user = await this.usersService.findById(parseInt(news.userId));
+    newsEntity.user = _user;
+    return await this.newsRepository.save(newsEntity);
   }
 
-  remove(id: number) {
-    if (this.news[id]) {
-      delete this.news[id];
-      return true;
+  async remove(id: number) {
+    const removeNews = await this.find(id);
+    if (removeNews) {
+      return this.newsRepository.remove(removeNews);
     }
-    return false;
+    return null;
   }
 
-  edit(id: number | string, news: NewsCreate) {
-    const updateNews: Partial<NewsCreate> = Object.keys(news).reduce(
-      (acc, key) => {
-        if (news[key] !== this.news[id][key]) acc[key] = news[key];
-        return acc;
-      },
-      {},
-    );
-    if (Object.keys(updateNews).length) {
-      this.mailService.sendEditNewsForAdmins(
-        ['wassa@li.ru'],
-        this.news[id],
-        updateNews,
-      );
+  async edit(id: number, news: NewsCreate): Promise<NewsEntity> {
+    const editableNews = await this.find(id);
+    if (editableNews) {
+      const newsEntity = new NewsEntity();
+      newsEntity.title = news.title || editableNews.title;
+      newsEntity.description = news.description || editableNews.description;
+      newsEntity.cover = news.cover || editableNews.cover;
+      const savedNews = await this.newsRepository.save(newsEntity);
+      if (savedNews) {
+        const updateNews = Object.keys(news).reduce((acc, key) => {
+          if (news[key] !== editableNews[key]) acc[key] = news[key];
+          return acc;
+        }, {});
+        if (Object.keys(updateNews).length) {
+          this.mailService.sendEditNewsForAdmins(
+            ['wassa@li.ru'],
+            editableNews,
+            updateNews,
+          );
+        }
+        return savedNews;
+      }
     }
-    if (this.news[id]) {
-      this.news[id] = {
-        ...news,
-        id,
-        cover: news.cover || this.news[id].cover,
-      };
-      return true;
-    }
-    return false;
+    return null;
   }
 }

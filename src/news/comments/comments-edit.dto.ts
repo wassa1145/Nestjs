@@ -6,7 +6,4 @@ export class CommentsEditDto {
   @IsString()
   @IsNotEmpty()
   message: string;
-
-  @ApiProperty()
-  avatar?: string;
 }

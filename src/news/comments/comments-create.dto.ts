@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, IsNumber } from 'class-validator';
 
 export class CommentsCreateDto {
   @ApiProperty()
@@ -8,9 +8,6 @@ export class CommentsCreateDto {
   message: string;
 
   @ApiProperty()
-  @IsString()
-  author: string;
-
-  @ApiProperty()
-  avatar?: string;
+  @IsNumber()
+  userId: number;
 }

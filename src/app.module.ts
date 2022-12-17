@@ -8,6 +8,7 @@ import { NewsModule } from './news/news.module';
 import { CalculatorModule } from './calculator/calculator.module';
 import { MailModule } from './mail/mail.module';
 import { UsersModule } from './user/users.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { UsersModule } from './user/users.module';
     CalculatorModule,
     MailModule,
     UsersModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

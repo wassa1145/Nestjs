@@ -1,0 +1,36 @@
+<h1>Редактирование профиля</h1>
+<h6>Привет, {{firstName}}!</h6>
+<form id="edit-profile">
+  <div class="mb-3">
+    <label for="firstName" class="form-label">Имя</label>
+    <input class="form-control" name="firstName" id="firstName" value="{{firstName}}">
+  </div>
+  <div class="mb-3">
+    <label for="email" class="form-label">email</label>
+    <input class="form-control" type="email" name="email" id="email" value="{{email}}">
+  </div>
+  <div class="mb-3">
+    <label for="password" class="form-label">Новый пароль</label>
+    <input class="form-control" name="password" id="password">
+  </div>
+  <button type="button" class="btn btn-primary" onclick='sendForm()'>Редактировать</button>
+</form>
+
+
+<script>
+	async function sendForm() {
+		const form = document.querySelector('#edit-profile');
+		const data = new FormData(form);
+ 		const formData = Object.fromEntries(data);
+		console.log(formData)
+		const response = await fetch('/user/', {
+			method: 'PATCH',
+			body: JSON.stringify(formData),
+			headers: {
+				"Content-Type": "application/json",
+        Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsImlhdCI6MTY3MTI2ODY2OSwiZXhwIjoxNjcxMjcyMjY5fQ.PhHkzD9p9ihCDyL89Pd-dSFhIy-Uu5cRuPW-JC5Spak'
+      },
+		});
+		window.location.reload()
+	}
+</script>
